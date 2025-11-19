@@ -9,7 +9,7 @@ public class ChainShoot : MonoBehaviour
     [SerializeField] float delayBetweenEachChain = 0.3f;
     [SerializeField] Transform playerFirePoint;
     [SerializeField] EnemyDetector playerEnemyDetector;
-    [SerializeField] GameObject linRendererPrefab;
+    [SerializeField] GameObject lineRendererPrefab;
 
     bool shooting;
     bool shot;
@@ -18,6 +18,51 @@ public class ChainShoot : MonoBehaviour
     List<GameObject> spawnedLineRenderers = new List<GameObject>();
     List<GameObject> enemiesInChain = new List<GameObject>();
     List<GameObject> activeEffect = new List<GameObject>();
+
+    private void Update()
+    {
+        if (Input.GetButton("Fire1"))
+        {
+            if (playerEnemyDetector.GetEnemiesInRange().Count > 0)
+            {
+                if (!shooting)
+                {
+                    StartShooting();
+                }
+            }
+            else
+            {
+                StopShooting();
+            }
+        }
+
+        if (Input.GetButtonUp("Fire1"))
+        {
+            StopShooting();
+        }
+    }
+
+    void StartShooting()
+    {
+        shooting = true;
+
+        if (playerEnemyDetector != null && playerFirePoint != null && lineRendererPrefab != null)
+        {
+            if (!shot)
+            {
+                shot = true;
+
+                currentClosestEnemy = playerEnemyDetector.GetClosestEnemy();
+                NewLineRenderer(playerFirePoint, playerEnemyDetector.GetClosestEnemy().transform, true);
+
+
+                if (maximumEnemiesInChain > 1)
+                {
+                    StartCoroutine(ChainReaction(playerEnemyDetector.GetClosestEnemy()));
+                }
+            }
+        }
+    }
 
     void StopShooting()
     {
@@ -65,9 +110,9 @@ public class ChainShoot : MonoBehaviour
         }
     }
 
-    void NewLinRenderer(Transform startPos, Transform endPos, bool getClosestEnemyToPlayer = false)
+    void NewLineRenderer(Transform startPos, Transform endPos, bool getClosestEnemyToPlayer = false)
     {
-        GameObject lineR = Instantiate(linRendererPrefab);
+        GameObject lineR = Instantiate(lineRendererPrefab);
         spawnedLineRenderers.Add(lineR);
         StartCoroutine(UpdateLineRenderer(lineR, startPos, endPos, getClosestEnemyToPlayer));
     }
@@ -89,33 +134,10 @@ public class ChainShoot : MonoBehaviour
 
                 if(!enemiesInChain.Contains(closestEnemy.GetComponent<EnemyDetector>().GetClosestEnemy()))
                 {
-                    NewLinRenderer(closestEnemy.transform, closestEnemy.GetComponent<EnemyDetector>().GetClosestEnemy().transform);
+                    NewLineRenderer(closestEnemy.transform, closestEnemy.GetComponent<EnemyDetector>().GetClosestEnemy().transform);
                     StartCoroutine(ChainReaction(closestEnemy.GetComponent<EnemyDetector>().GetClosestEnemy()));
                 }
             }
         }
-    }
-
-    private void Update()
-    {
-        /*if (Input.GetButton("Fire1"))
-        {
-            if(playerEnemyDetector.GetEnemiesInRange().Count > 0)
-            {
-                if(!shooting)
-                {
-                    StartShooting();
-                }
-            }
-            else
-            {
-                StopShooting();
-            }
-        }
-
-        if(Input.GetButtonUp("Fire1"))
-        {
-            StopShooting();
-        }*/
     }
 }
